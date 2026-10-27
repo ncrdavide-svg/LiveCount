@@ -1,0 +1,9 @@
+# Eseguibile: si distribuisce dalle Release, non dal codice
+*.exe
+
+# Libreria NDI: build.bat la copia dal runtime NDI installato e la incorpora nell'exe
+lib/
+
+# Impostazioni locali dell'utente
+*.settings.xml
+*.settings.xml.tmp
