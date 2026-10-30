@@ -20,6 +20,10 @@ namespace LiveCount
         readonly DisplayForm _display;
         readonly NdiReceiver _ndi;
         readonly UsbCapture _usb = new UsbCapture();
+        RemoteApi _api;
+        NumericUpDown _apiPort;
+        ComboBox _deckSize;
+        Label _apiStatus;
         List<string> _usbDevices = new List<string>();
         const string NdiPrefix = "NDI: ", UsbPrefix = "USB: ";
         readonly System.Windows.Forms.Timer _tick = new System.Windows.Forms.Timer();
@@ -85,6 +89,9 @@ namespace LiveCount
             _tick.Interval = 33;
             _tick.Tick += delegate { Refresh_(); };
             _tick.Start();
+
+            _api = new RemoteApi(HandleApi);
+            StartApi();
 
             Microsoft.Win32.SystemEvents.DisplaySettingsChanged += OnDisplaysChanged;
         }
@@ -214,9 +221,19 @@ namespace LiveCount
             gMsgLook.Controls.Add(_msgSize);
             _cMsg = ColorRow(gMsgLook, "Colore testo", 16, 96);
 
-            var help = Lbl("Scorciatoie: F5 avvia/pausa  -  F8 reset  -  F9 mostra/nascondi messaggio", 476, 612);
-            help.ForeColor = SystemColors.GrayText;
-            Controls.Add(help);
+            var gApi = Group("Companion / Stream Deck", 476, 606, 450, 84);
+            gApi.Controls.Add(Lbl("Porta:", 16, 22));
+            _apiPort = Num(60, 18, 1024, 65535); _apiPort.Width = 70;
+            _apiPort.ValueChanged += delegate { if (!_loading) { _s.ApiPort = (int)_apiPort.Value; _s.Save(); StartApi(); } };
+            gApi.Controls.Add(_apiPort);
+            _apiStatus = Lbl("", 140, 22); _apiStatus.AutoSize = false; _apiStatus.Size = new Size(300, 18);
+            gApi.Controls.Add(_apiStatus);
+            gApi.Controls.Add(Lbl("Deck:", 16, 52));
+            _deckSize = new ComboBox { Location = new Point(60, 48), Size = new Size(154, 24), DropDownStyle = ComboBoxStyle.DropDownList };
+            _deckSize.Items.AddRange(new object[] { "Stream Deck (15 tasti)", "Stream Deck XL (32 tasti)" });
+            _deckSize.SelectedIndexChanged += delegate { if (!_loading) { _s.CompanionDeck = _deckSize.SelectedIndex; _s.Save(); } };
+            gApi.Controls.Add(_deckSize);
+            gApi.Controls.Add(Btn("Esporta per Companion...", 222, 46, 212, 28, delegate { ExportCompanion(); }));
 
             // --- Colonna destra: NDI e monitoraggio ---
             var gNdi = Group("Video (NDI o scheda USB) e posizione del timer", 940, 8, 460, 682);
@@ -385,6 +402,8 @@ namespace LiveCount
             SetSwatch(_cMsg, Settings.ParseColor(_s.MessageColor, Color.White));
             SetSwatch(_cBox, Settings.ParseColor(_s.BoxColor, Color.Black));
             _boxOpacity.Value = Clamp(_s.BoxOpacity, 0, 100);
+            _apiPort.Value = Clamp(_s.ApiPort, 1024, 65535);
+            _deckSize.SelectedIndex = Math.Max(0, Math.Min(1, _s.CompanionDeck));
             _ndiEnable.Checked = _s.NdiEnabled;
             RefreshSources(true);
         }
@@ -465,7 +484,11 @@ namespace LiveCount
         void LoadPreset()
         {
             var p = _presetList.SelectedItem as Preset;
-            if (p == null) return;
+            if (p != null) ApplyPreset(p);
+        }
+
+        void ApplyPreset(Preset p)
+        {
             _loading = true;
             _h.Value = Clamp(p.Seconds / 3600, 0, 99);
             _m.Value = (p.Seconds % 3600) / 60;
@@ -640,6 +663,109 @@ namespace LiveCount
             if (_bigPreview != null) _bigPreview.Invalidate();
         }
 
+        // ---------------- controllo remoto (Companion) ----------------
+        void StartApi()
+        {
+            if (_api == null) return;
+            if (_api.Start(_s.ApiPort))
+            {
+                _apiStatus.Text = "\u25CF Attivo su porta " + _s.ApiPort + "  (" + string.Join(", ", RemoteApi.LocalAddresses()) + ")";
+                _apiStatus.ForeColor = Color.ForestGreen;
+            }
+            else
+            {
+                _apiStatus.Text = _api.Error;
+                _apiStatus.ForeColor = Color.Firebrick;
+            }
+        }
+
+        // Chiamato dal thread del server: i comandi vengono eseguiti sul thread dell'interfaccia.
+        string HandleApi(string command, Dictionary<string, string> args)
+        {
+            try
+            {
+                return (string)Invoke(new Func<string>(delegate { return ExecuteApi(command, args); }));
+            }
+            catch { return "{\"ok\":false}"; }
+        }
+
+        string ExecuteApi(string command, Dictionary<string, string> args)
+        {
+            string value;
+            switch (command)
+            {
+                case "start": _engine.Start(); break;
+                case "pause": _engine.Pause(); break;
+                case "toggle": ToggleStart(); break;
+                case "reset": _engine.Reset(); break;
+                case "add":
+                    double min;
+                    if (!args.TryGetValue("min", out value) ||
+                        !double.TryParse(value.Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out min))
+                        return "{\"ok\":false,\"error\":\"parametro min mancante\"}";
+                    _engine.AddTime((long)Math.Round(min * 60000));
+                    break;
+                case "preset":
+                    Preset p = null;
+                    int index;
+                    if (args.TryGetValue("name", out value))
+                        p = _s.Presets.FirstOrDefault(x => string.Equals(x.Name, value, StringComparison.OrdinalIgnoreCase));
+                    else if (args.TryGetValue("index", out value) && int.TryParse(value, out index) && index >= 1 && index <= _s.Presets.Count)
+                        p = _s.Presets[index - 1];
+                    if (p == null) return "{\"ok\":false,\"error\":\"preset non trovato\"}";
+                    ApplyPreset(p);
+                    break;
+                case "message/show": _renderer.MessageVisible = true; RepaintOutputs(); break;
+                case "message/hide": _renderer.MessageVisible = false; RepaintOutputs(); break;
+                case "message/toggle": ToggleMessage(); break;
+                case "display/show": if (!_display.Visible) PlaceDisplay(); break;
+                case "display/hide": _display.Hide(); break;
+                case "status": case "": break;
+                default: return null;
+            }
+            return StatusJson();
+        }
+
+        string StatusJson()
+        {
+            string phase = _engine.Phase(_s.WarnPercent, _s.DangerPercent).ToString().ToLowerInvariant();
+            return "{\"ok\":true,\"text\":" + RemoteApi.JsonString(_engine.DisplayText) +
+                   ",\"remaining_ms\":" + _engine.RemainingMs +
+                   ",\"total_ms\":" + _engine.TotalMs +
+                   ",\"running\":" + (_engine.Running ? "true" : "false") +
+                   ",\"phase\":" + RemoteApi.JsonString(phase) +
+                   ",\"message_visible\":" + (_renderer.MessageVisible ? "true" : "false") + "}";
+        }
+
+        void ExportCompanion()
+        {
+            // Companion sullo stesso PC usa 127.0.0.1; da un altro PC serve l'indirizzo di rete di questo.
+            var ips = RemoteApi.LocalAddresses();
+            string host = "127.0.0.1";
+            if (ips.Count > 0)
+            {
+                var answer = MessageBox.Show(this,
+                    "Companion \u00E8 installato su questo stesso PC?\n\nS\u00EC = questo PC (127.0.0.1)\nNo = un altro PC in rete (" + ips[0] + ")",
+                    "Esporta per Companion", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Question);
+                if (answer == DialogResult.Cancel) return;
+                if (answer == DialogResult.No) host = ips[0];
+            }
+            int cols = _s.CompanionDeck == 1 ? 8 : 5, rows = _s.CompanionDeck == 1 ? 4 : 3;
+            int hidden;
+            string json = CompanionExport.Build(_s.Presets, "http://" + host + ":" + _s.ApiPort + "/api/", cols, rows, out hidden);
+
+            using (var dlg = new SaveFileDialog { Filter = "Configurazione Companion (*.companionconfig)|*.companionconfig", FileName = "LiveCount.companionconfig" })
+            {
+                if (dlg.ShowDialog(this) != DialogResult.OK) return;
+                System.IO.File.WriteAllText(dlg.FileName, json, new System.Text.UTF8Encoding(false));
+            }
+            string msg = "File creato.\n\nIn Companion: Import / Export > Import, scegli il file e importa la pagina \"LiveCount\" su una pagina vuota. " +
+                         "Quando aggiungi o rinomini preset, esporta di nuovo e reimporta.";
+            if (hidden > 0)
+                msg += "\n\nAttenzione: " + hidden + " preset non entrano nei tasti del deck scelto e finiscono su righe non visibili.";
+            MessageBox.Show(this, msg, "Esporta per Companion", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
         // ---------------- monitor / display ----------------
         void RefreshMonitors()
         {
@@ -809,6 +935,7 @@ namespace LiveCount
             if (_ndi != null) { _ndi.FrameArrived -= OnVideoFrame; _ndi.Dispose(); }
             _usb.FrameArrived -= OnVideoFrame;
             _usb.Dispose();
+            if (_api != null) _api.Dispose();
             _display.AllowClose = true;
             _display.Close();
             base.OnFormClosed(e);

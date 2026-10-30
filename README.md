@@ -20,6 +20,34 @@ Nessuna installazione: scarichi `LiveCount.exe`, doppio clic e parte. Funziona s
 - **Monitor dal vivo** dello schermo secondario nella regia: trascini il riquadro del timer per spostarlo, l'angolo per ridimensionarlo, la rotellina per ingrandirlo.
 - Font, dimensioni e colori di timer, sfondo, messaggio e riquadro tutti configurabili.
 
+## Stream Deck con Bitfocus Companion
+
+LiveCount si comanda dalla rete, quindi anche da uno Stream Deck tramite [Bitfocus Companion](https://bitfocus.io/companion).
+
+1. In LiveCount, nel riquadro **Companion / Stream Deck**, scegli il tuo deck (15 o 32 tasti) e premi **Esporta per Companion...**
+2. Indica se Companion gira sullo stesso PC o su un altro, e salva `LiveCount.companionconfig`.
+3. In Companion: **Import / Export → Import**, scegli il file e importa la pagina "LiveCount" su una pagina vuota.
+
+Tasti generati: **AVVIA**, **PAUSA**, **RESET**, **+1 / +5 / +10 MIN**, **−1 / −5 / −10 MIN** e un tasto per ogni preset (nome e durata). Quando aggiungi o rinomini preset, esporta di nuovo e reimporta.
+
+Serve il modulo **Generic HTTP** di Companion. Se Companion è su un altro PC, consenti LiveCount nel Windows Firewall al primo avvio.
+
+<details>
+<summary>API HTTP (per altri sistemi di controllo)</summary>
+
+Porta predefinita `8787`, tutte le richieste in GET, risposta JSON con lo stato del timer.
+
+| Indirizzo | Azione |
+|---|---|
+| `/api/start` · `/api/pause` · `/api/toggle` · `/api/reset` | Trasporto |
+| `/api/add?min=5` (negativo per togliere) | Aggiunge o toglie minuti |
+| `/api/preset?name=Nome` · `/api/preset?index=1` | Carica un preset |
+| `/api/message/show` · `/hide` · `/toggle` | Messaggio sotto il timer |
+| `/api/display/show` · `/hide` | Display sul secondo schermo |
+| `/api/status` | Stato: `text`, `remaining_ms`, `total_ms`, `running`, `phase`, `message_visible` |
+
+</details>
+
 ## Scorciatoie
 
 | Tasto | Azione |

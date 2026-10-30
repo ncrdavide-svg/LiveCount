@@ -1,4 +1,4 @@
-// LiveCount - regia + display a schermo pieno su monitor secondario.
+﻿// LiveCount - regia + display a schermo pieno su monitor secondario.
 // Compilato con il csc di .NET Framework 4 (C# 5): nessuna installazione richiesta.
 using System;
 using System.Collections.Generic;
@@ -11,7 +11,7 @@ using System.Xml.Serialization;
 
 [assembly: System.Reflection.AssemblyTitle("LiveCount")]
 [assembly: System.Reflection.AssemblyProduct("LiveCount")]
-[assembly: System.Reflection.AssemblyVersion("1.2.0.0")]
+[assembly: System.Reflection.AssemblyVersion("1.1.0.0")]
 
 namespace LiveCount
 {
@@ -91,6 +91,10 @@ namespace LiveCount
         public double BoxX = 0.60, BoxY = 0.62, BoxW = 0.37, BoxH = 0.34;
         public string BoxColor = "#000000";
         public int BoxOpacity = 65;
+
+        // Controllo remoto (Companion / Stream Deck).
+        public int ApiPort = 8787;
+        public int CompanionDeck = 0; // 0 = Stream Deck 15 tasti, 1 = XL 32 tasti
 
         static string _path;
 
