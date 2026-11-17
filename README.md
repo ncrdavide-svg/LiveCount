@@ -17,6 +17,8 @@
 
 Nessuna installazione: scarichi `LiveCount.exe`, doppio clic e parte. Funziona su Windows 10 e 11 a 64 bit.
 
+Preferisci installarlo come gli altri programmi? Scarica **[LiveCount-Setup.exe](https://github.com/ncrdavide-svg/LiveCount/releases/latest/download/LiveCount-Setup.exe)**: aggiunge LiveCount al menu Start (e, se vuoi, al desktop) e si disinstalla da *Impostazioni → App → App installate*. Puoi installarlo per tutti gli utenti o solo per te (senza permessi di amministratore).
+
 > Al primo avvio Windows potrebbe mostrare "Windows ha protetto il PC" (l'exe non è firmato): clicca **Ulteriori informazioni → Esegui comunque**.
 
 ## Funzioni
@@ -81,6 +83,14 @@ build.bat
 ```
 
 L'icona si rigenera con `python tools/make_icon.py` (richiede Pillow).
+
+L'installer si crea con [Inno Setup 6](https://jrsoftware.org/isinfo.php) (`winget install JRSoftware.InnoSetup`):
+
+```bat
+powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1
+```
+
+Compila l'exe e mette `LiveCount-Setup-<versione>.exe` e `LiveCount-Setup.exe` nella cartella `dist`.
 
 ## Supporta il progetto
 

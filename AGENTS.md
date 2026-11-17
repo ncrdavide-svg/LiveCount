@@ -49,6 +49,14 @@ build.bat
 - `lib/` è in `.gitignore`: su una nuova postazione installa **NDI Tools** (gratuito) prima di compilare, altrimenti l'exe non avrà NDI incorporato.
 - Icona: `python tools/make_icon.py` (richiede Pillow) rigenera `assets/LiveCount.ico` e le anteprime PNG.
 
+## Installer
+
+- `installer/LiveCount.iss` (Inno Setup 6, come LiveSlides) + `installer/build-installer.ps1`: lancia `build.bat`, legge la versione dall'exe e crea `dist/LiveCount-Setup-<ver>.exe` e `dist/LiveCount-Setup.exe` (`dist/` è in `.gitignore`). Inno Setup è l'unico strumento esterno ed è solo per l'installer: l'exe si compila ancora con il solo `csc`.
+- **AppId fisso** `{766B9C0E-13AB-4EC5-81CF-A64E3E3C3441}`: non cambiarlo, serve agli aggiornamenti.
+- Installa per tutti (Programmi, chiede admin; impostazioni in `%APPDATA%\LiveCount`) o "solo per me" (`%LOCALAPPDATA%\Programs\LiveCount`; impostazioni accanto all'exe). Menu Start, desktop facoltativo, avvio a fine installazione, voce in "App installate".
+- La disinstallazione cancella la cache NDI (`%LOCALAPPDATA%\LiveCount`) e chiede se eliminare anche preset e impostazioni (predefinito: No).
+- Ogni release porta sia `LiveCount.exe` (portabile) sia `LiveCount-Setup.exe` (link stabile nel README).
+
 ## Struttura del codice (`src/`)
 
 | File | Contenuto |

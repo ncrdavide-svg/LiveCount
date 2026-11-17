@@ -7,3 +7,6 @@ lib/
 # Impostazioni locali dell'utente
 *.settings.xml
 *.settings.xml.tmp
+
+# Installer generato da installer/build-installer.ps1
+dist/
