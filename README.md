@@ -4,7 +4,16 @@
 
 <p align="center">Timer countdown per eventi dal vivo: regia sul monitor principale, display a schermo pieno sul secondo schermo.</p>
 
-<p align="center"><a href="https://github.com/ncrdavide-svg/LiveCount/releases/latest/download/LiveCount.exe"><b>⬇ Scarica LiveCount.exe</b></a></p>
+<p align="center">
+  <a href="https://github.com/ncrdavide-svg/LiveCount/releases/latest/download/LiveCount.exe">
+    <img src="assets/download-button.png" width="440" alt="⬇ Scarica LiveCount — per Windows 10/11, senza installazione">
+  </a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/v/release/ncrdavide-svg/LiveCount?label=versione&color=2ea44f" alt="versione"><br>
+  Il pulsante scarica direttamente <code>LiveCount.exe</code> · <a href="https://github.com/ncrdavide-svg/LiveCount/releases">tutte le versioni e le novità</a>
+</p>
 
 Nessuna installazione: scarichi `LiveCount.exe`, doppio clic e parte. Funziona su Windows 10 e 11 a 64 bit.
 
