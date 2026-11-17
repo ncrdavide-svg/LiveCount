@@ -11,7 +11,7 @@ using System.Xml.Serialization;
 
 [assembly: System.Reflection.AssemblyTitle("LiveCount")]
 [assembly: System.Reflection.AssemblyProduct("LiveCount")]
-[assembly: System.Reflection.AssemblyVersion("1.1.0.0")]
+[assembly: System.Reflection.AssemblyVersion("1.2.0.0")]
 
 namespace LiveCount
 {
@@ -96,6 +96,9 @@ namespace LiveCount
         public int ApiPort = 8787;
         public int CompanionDeck = 0; // 0 = Stream Deck 15 tasti, 1 = XL 32 tasti
 
+        // Regia: pannello "Avanzate" (video NDI/USB e posizione del riquadro) aperto o chiuso.
+        public bool ShowAdvanced = false;
+
         static string _path;
 
         static string FilePath
@@ -174,14 +177,35 @@ namespace LiveCount
 
     public class TimerEngine
     {
+        public const double MinSpeed = 0.5, MaxSpeed = 2.0, SpeedStep = 0.1;
+
         readonly Stopwatch _sw = new Stopwatch();
-        long _accumulatedMs;
+        double _accumulatedMs;
+        double _speed = 1.0;
 
         public long TotalMs { get; private set; }
         public bool Running { get { return _sw.IsRunning; } }
 
-        public long ElapsedMs { get { return _accumulatedMs + _sw.ElapsedMilliseconds; } }
+        // Il tempo trascorso dal riavvio dello Stopwatch vale "Speed" volte il tempo reale.
+        public long ElapsedMs { get { return (long)(_accumulatedMs + _sw.Elapsed.TotalMilliseconds * _speed); } }
         public long RemainingMs { get { return TotalMs - ElapsedMs; } }
+
+        // Velocita' di scorrimento (1.0 = tempo reale), da MinSpeed a MaxSpeed a passi di 0.1.
+        public double Speed
+        {
+            get { return _speed; }
+            set
+            {
+                double v = Math.Round(Math.Max(MinSpeed, Math.Min(MaxSpeed, value)), 1);
+                if (v == _speed) return;
+                // Consolida il tratto percorso alla velocita' precedente, poi riparte con la nuova.
+                bool running = _sw.IsRunning;
+                _accumulatedMs += _sw.Elapsed.TotalMilliseconds * _speed;
+                _sw.Reset();
+                if (running) _sw.Start();
+                _speed = v;
+            }
+        }
 
         public void SetTotal(long ms)
         {
@@ -196,7 +220,7 @@ namespace LiveCount
         {
             if (!_sw.IsRunning) return;
             _sw.Stop();
-            _accumulatedMs += _sw.ElapsedMilliseconds;
+            _accumulatedMs += _sw.Elapsed.TotalMilliseconds * _speed;
             _sw.Reset();
         }
 

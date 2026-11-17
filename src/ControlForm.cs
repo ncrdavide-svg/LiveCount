@@ -45,6 +45,9 @@ namespace LiveCount
         PreviewControl _monitorPreview;
         Form _bigPreviewWindow;
         PreviewControl _bigPreview;
+        Label _speedLbl;
+        Button _btnAdvanced;
+        GroupBox _gTimer, _gDisp, _gNdi;
 
         public ControlForm()
         {
@@ -100,7 +103,7 @@ namespace LiveCount
         void BuildUi()
         {
             // --- Colonna sinistra ---
-            var gTimer = Group("Timer", 12, 8, 450, 250);
+            var gTimer = _gTimer = Group("Timer", 12, 8, 450, 290);
             gTimer.Controls.Add(Lbl("Ore", 16, 26));
             gTimer.Controls.Add(Lbl("Minuti", 96, 26));
             gTimer.Controls.Add(Lbl("Secondi", 176, 26));
@@ -131,7 +134,22 @@ namespace LiveCount
             gTimer.Controls.Add(Btn("-1 min", 278, 190, 76, 44, delegate { _engine.AddTime(-60000); }));
             gTimer.Controls.Add(Btn("+1 min", 358, 190, 76, 44, delegate { _engine.AddTime(60000); }));
 
-            var gPreset = Group("Preset", 12, 264, 450, 210);
+            // Velocita' di scorrimento: da 0.5x a 2.0x a passi di 0.1 (1.0x = tempo reale).
+            gTimer.Controls.Add(Lbl("Velocita':", 16, 252));
+            gTimer.Controls.Add(Btn("0.5x", 86, 244, 50, 32, delegate { SetSpeed(TimerEngine.MinSpeed); }));
+            gTimer.Controls.Add(Btn("- 0.1", 140, 244, 60, 32, delegate { SetSpeed(_engine.Speed - TimerEngine.SpeedStep); }));
+            _speedLbl = new Label
+            {
+                Location = new Point(204, 244), Size = new Size(80, 32),
+                Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                TextAlign = ContentAlignment.MiddleCenter, BorderStyle = BorderStyle.FixedSingle
+            };
+            gTimer.Controls.Add(_speedLbl);
+            gTimer.Controls.Add(Btn("+ 0.1", 288, 244, 60, 32, delegate { SetSpeed(_engine.Speed + TimerEngine.SpeedStep); }));
+            gTimer.Controls.Add(Btn("2x", 352, 244, 40, 32, delegate { SetSpeed(TimerEngine.MaxSpeed); }));
+            gTimer.Controls.Add(Btn("1x", 396, 244, 38, 32, delegate { SetSpeed(1.0); }));
+
+            var gPreset = Group("Preset", 12, 304, 450, 210);
             _presetList = new ListBox { Location = new Point(16, 24), Size = new Size(280, 140), IntegralHeight = false };
             _presetList.DoubleClick += delegate { LoadPreset(); };
             gPreset.Controls.Add(_presetList);
@@ -144,8 +162,8 @@ namespace LiveCount
             gPreset.Controls.Add(_presetName);
             gPreset.Controls.Add(Btn("Salva ore/min/sec", 304, 170, 130, 30, delegate { SavePreset(); }));
 
-            var gMsg = Group("Messaggio sotto il timer", 12, 480, 450, 210);
-            _msgBox = new TextBox { Location = new Point(16, 24), Size = new Size(418, 100), Multiline = true, ScrollBars = ScrollBars.Vertical, Font = new Font("Segoe UI", 11F) };
+            var gMsg = Group("Messaggio sotto il timer", 12, 520, 450, 170);
+            _msgBox = new TextBox { Location = new Point(16, 24), Size = new Size(418, 60), Multiline = true, ScrollBars = ScrollBars.Vertical, Font = new Font("Segoe UI", 11F) };
             _msgBox.TextChanged += delegate
             {
                 _renderer.MessageText = _msgBox.Text;
@@ -154,26 +172,29 @@ namespace LiveCount
             };
             _msgBox.Leave += delegate { _s.Save(); };
             gMsg.Controls.Add(_msgBox);
-            _btnMsgShow = Btn("MOSTRA  (F9)", 16, 132, 150, 40, delegate { ToggleMessage(); });
+            _btnMsgShow = Btn("MOSTRA  (F9)", 16, 92, 150, 40, delegate { ToggleMessage(); });
             _btnMsgShow.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             gMsg.Controls.Add(_btnMsgShow);
-            gMsg.Controls.Add(Btn("Pulisci", 172, 132, 80, 40, delegate { _msgBox.Clear(); }));
-            _msgOnAir = Lbl("", 262, 144); _msgOnAir.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            gMsg.Controls.Add(Btn("Pulisci", 172, 92, 80, 40, delegate { _msgBox.Clear(); }));
+            _msgOnAir = Lbl("", 262, 104); _msgOnAir.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             gMsg.Controls.Add(_msgOnAir);
-            gMsg.Controls.Add(Lbl("Il testo si aggiorna in diretta mentre e' visibile.", 16, 180));
+            gMsg.Controls.Add(Lbl("Il testo si aggiorna in diretta mentre e' visibile.", 16, 140));
 
             // --- Colonna centrale ---
-            var gDisp = Group("Display", 476, 8, 450, 110);
+            var gDisp = _gDisp = Group("Display", 476, 8, 450, 110);
             gDisp.Controls.Add(Lbl("Monitor:", 16, 30));
             _monitor = new ComboBox { Location = new Point(80, 26), Size = new Size(354, 24), DropDownStyle = ComboBoxStyle.DropDownList };
             _monitor.SelectedIndexChanged += delegate { if (!_loading) { _s.DisplayDevice = SelectedScreen().DeviceName; PlaceDisplay(); _s.Save(); } };
             gDisp.Controls.Add(_monitor);
-            _fullscreen = new CheckBox { Text = "Schermo pieno", Location = new Point(80, 60), AutoSize = true };
+            _fullscreen = new CheckBox { Text = "Schermo pieno", Location = new Point(16, 62), AutoSize = true };
             _fullscreen.CheckedChanged += delegate { if (!_loading) { _s.Fullscreen = _fullscreen.Checked; PlaceDisplay(); _s.Save(); } };
             gDisp.Controls.Add(_fullscreen);
+            // Apre/chiude la colonna con il video esterno (NDI/USB) e la posizione del riquadro.
+            _btnAdvanced = Btn("Avanzate >>", 128, 56, 90, 30, delegate { SetAdvanced(!_s.ShowAdvanced); });
+            gDisp.Controls.Add(_btnAdvanced);
             // Due pulsanti separati: quello attivo e' evidenziato, cosi' lo stato si vede a colpo d'occhio.
-            _btnDisplayShow = Btn("MOSTRA", 200, 56, 115, 30, delegate { if (!_display.Visible) PlaceDisplay(); });
-            _btnDisplayHide = Btn("NASCONDI", 319, 56, 115, 30, delegate { _display.Hide(); });
+            _btnDisplayShow = Btn("MOSTRA", 224, 56, 103, 30, delegate { if (!_display.Visible) PlaceDisplay(); });
+            _btnDisplayHide = Btn("NASCONDI", 331, 56, 103, 30, delegate { _display.Hide(); });
             foreach (var b in new[] { _btnDisplayShow, _btnDisplayHide })
             {
                 b.FlatStyle = FlatStyle.Flat;
@@ -236,7 +257,7 @@ namespace LiveCount
             gApi.Controls.Add(Btn("Esporta per Companion...", 222, 46, 212, 28, delegate { ExportCompanion(); }));
 
             // --- Colonna destra: NDI e monitoraggio ---
-            var gNdi = Group("Video (NDI o scheda USB) e posizione del timer", 940, 8, 460, 682);
+            var gNdi = _gNdi = Group("Avanzate: video (NDI o scheda USB) e posizione del timer", 940, 8, 460, 682);
             gNdi.Controls.Add(Lbl("Sorgente:", 16, 30));
             _ndiCombo = new ComboBox { Location = new Point(80, 26), Size = new Size(280, 24), DropDownStyle = ComboBoxStyle.DropDownList };
             _ndiCombo.DropDown += delegate { RefreshSources(true); };
@@ -720,6 +741,16 @@ namespace LiveCount
                 case "message/toggle": ToggleMessage(); break;
                 case "display/show": if (!_display.Visible) PlaceDisplay(); break;
                 case "display/hide": _display.Hide(); break;
+                case "speed":
+                    double sp;
+                    if (args.TryGetValue("value", out value) &&
+                        double.TryParse(value.Replace(',', '.'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out sp))
+                        SetSpeed(sp);
+                    else return "{\"ok\":false,\"error\":\"parametro value mancante\"}";
+                    break;
+                case "speed/up": SetSpeed(_engine.Speed + TimerEngine.SpeedStep); break;
+                case "speed/down": SetSpeed(_engine.Speed - TimerEngine.SpeedStep); break;
+                case "speed/reset": SetSpeed(1.0); break;
                 case "status": case "": break;
                 default: return null;
             }
@@ -733,6 +764,7 @@ namespace LiveCount
                    ",\"remaining_ms\":" + _engine.RemainingMs +
                    ",\"total_ms\":" + _engine.TotalMs +
                    ",\"running\":" + (_engine.Running ? "true" : "false") +
+                   ",\"speed\":" + _engine.Speed.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) +
                    ",\"phase\":" + RemoteApi.JsonString(phase) +
                    ",\"message_visible\":" + (_renderer.MessageVisible ? "true" : "false") + "}";
         }
@@ -821,6 +853,9 @@ namespace LiveCount
         protected override void OnLoad(EventArgs e)
         {
             base.OnLoad(e);
+            // Qui il ridimensionamento DPI e' gia' fatto: la larghezza si calcola sui riquadri reali.
+            ApplyAdvanced();
+            UpdateSpeedLabel();
             // La regia sta sempre sul monitor principale (CenterScreen userebbe quello del mouse).
             var wa = Screen.PrimaryScreen.WorkingArea;
             if (Width > wa.Width) Width = wa.Width;
@@ -837,6 +872,50 @@ namespace LiveCount
         }
 
         // ---------------- comandi ----------------
+        void SetSpeed(double speed)
+        {
+            _engine.Speed = speed;
+            UpdateSpeedLabel();
+        }
+
+        static string FormatSpeed(double speed)
+        {
+            return speed.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) + "x";
+        }
+
+        void UpdateSpeedLabel()
+        {
+            double v = _engine.Speed;
+            string text = FormatSpeed(v);
+            // Fuori dal tempo reale l'etichetta si colora, cosi' non passa inosservata.
+            Color back = v > 1.0 ? Color.FromArgb(255, 220, 160) : v < 1.0 ? Color.FromArgb(190, 220, 255) : SystemColors.Control;
+            if (_speedLbl.Text != text) _speedLbl.Text = text;
+            if (_speedLbl.BackColor != back) _speedLbl.BackColor = back;
+        }
+
+        void SetAdvanced(bool show)
+        {
+            _s.ShowAdvanced = show;
+            _s.Save();
+            ApplyAdvanced();
+        }
+
+        // Mostra o nasconde la colonna "Avanzate" e adatta la larghezza della regia.
+        void ApplyAdvanced()
+        {
+            bool show = _s.ShowAdvanced;
+            _gNdi.Visible = show;
+            _btnAdvanced.Text = show ? "<< Avanzate" : "Avanzate >>";
+            int margin = _gTimer.Left - AutoScrollPosition.X;
+            int right = (show ? _gNdi.Right : _gDisp.Right) - AutoScrollPosition.X;
+            int width = right + margin;
+            if (WindowState == FormWindowState.Normal)
+            {
+                int maxW = Screen.FromControl(this).WorkingArea.Width - (Width - ClientSize.Width);
+                ClientSize = new Size(Math.Min(width, maxW), ClientSize.Height);
+            }
+        }
+
         void ToggleStart()
         {
             if (_engine.Running) _engine.Pause(); else _engine.Start();
@@ -895,6 +974,8 @@ namespace LiveCount
             if (_engine.Running) state = _engine.RemainingMs <= 0 ? "IN ONDA - TEMPO SCADUTO (conteggio extra)" : "IN ONDA";
             else if (_engine.ElapsedMs == 0) state = "PRONTO";
             else state = "IN PAUSA";
+            if (_engine.Speed != 1.0) state += "  -  velocita' " + FormatSpeed(_engine.Speed);
+            UpdateSpeedLabel();
             if (_state.Text != state) _state.Text = state;
 
             string startLbl = _engine.Running ? "PAUSA  (F5)" : "AVVIA  (F5)";
