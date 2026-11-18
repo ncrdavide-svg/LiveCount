@@ -33,6 +33,7 @@ Preferisci installarlo come gli altri programmi? Scarica **[LiveCount-Setup.exe]
 - **Video di sfondo** da una sorgente **NDI®** o da una **scheda di acquisizione USB** (Magewell USB Capture, AJA U-TAP, webcam…), con il timer in un riquadro sovrapposto. Le impostazioni del video si aprono con il pulsante **Avanzate** nella regia.
 - **Monitor dal vivo** dello schermo secondario nella regia: trascini il riquadro del timer per spostarlo, l'angolo per ridimensionarlo, la rotellina per ingrandirlo.
 - Font, dimensioni e colori di timer, sfondo, messaggio e riquadro tutti configurabili.
+- **Eventi salvati**: menu **File → Salva evento / Apri evento** (Ctrl+S / Ctrl+O) per salvare in un file `.livecount` timer, preset, aspetto, messaggio e video di un evento e ricaricarlo quando serve, anche su un altro PC (monitor e porta restano quelli del PC che lo apre).
 
 ## Stream Deck con Bitfocus Companion
 

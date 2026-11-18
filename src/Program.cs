@@ -168,6 +168,56 @@ namespace LiveCount
         {
             return "#" + c.R.ToString("X2") + c.G.ToString("X2") + c.B.ToString("X2");
         }
+
+        // ---------------- file evento (.livecount) ----------------
+        // Un evento salvato con "File > Salva evento": timer, preset, aspetto, messaggio, video e
+        // riquadro. Le impostazioni del PC (monitor, schermo pieno, porta, deck, pannello Avanzate)
+        // restano quelle del PC che apre il file: su un altro PC i monitor sono diversi.
+
+        public const string EventExtension = ".livecount";
+
+        public void CopyEventFrom(Settings o)
+        {
+            Hours = o.Hours; Minutes = o.Minutes; Seconds = o.Seconds;
+            Presets = new List<Preset>();
+            if (o.Presets != null)
+                foreach (var p in o.Presets) Presets.Add(new Preset { Name = p.Name, Seconds = p.Seconds });
+
+            TimerFont = o.TimerFont; TimerBold = o.TimerBold; TimerSize = o.TimerSize;
+            BackColor = o.BackColor; NormalColor = o.NormalColor; WarnColor = o.WarnColor; DangerColor = o.DangerColor;
+            WarnPercent = o.WarnPercent; DangerPercent = o.DangerPercent;
+            ShowBar = o.ShowBar; BarHeight = o.BarHeight;
+
+            MessageText = o.MessageText; MessageFont = o.MessageFont; MessageBold = o.MessageBold;
+            MessageSize = o.MessageSize; MessageColor = o.MessageColor;
+
+            NdiEnabled = o.NdiEnabled; NdiSource = o.NdiSource;
+            BoxX = o.BoxX; BoxY = o.BoxY; BoxW = o.BoxW; BoxH = o.BoxH;
+            BoxColor = o.BoxColor; BoxOpacity = o.BoxOpacity;
+        }
+
+        public void SaveEvent(string path)
+        {
+            var ev = new Settings();
+            ev.CopyEventFrom(this);
+            string tmp = path + ".tmp";
+            using (var fs = File.Create(tmp))
+                new XmlSerializer(typeof(Settings)).Serialize(fs, ev);
+            if (File.Exists(path)) File.Delete(path);
+            File.Move(tmp, path);
+        }
+
+        // A differenza di Load, un file illeggibile solleva un'eccezione: l'utente ha chiesto
+        // proprio quel file e deve sapere che non si puo' aprire.
+        public static Settings LoadEvent(string path)
+        {
+            using (var fs = File.OpenRead(path))
+            {
+                var s = (Settings)new XmlSerializer(typeof(Settings)).Deserialize(fs);
+                if (s == null) throw new InvalidDataException("Il file e' vuoto.");
+                return s;
+            }
+        }
     }
 
     // ------------------------------------------------------------------
