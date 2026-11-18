@@ -28,6 +28,7 @@ namespace LiveCount
         const string NdiPrefix = "NDI: ", UsbPrefix = "USB: ";
         readonly System.Windows.Forms.Timer _tick = new System.Windows.Forms.Timer();
         bool _loading;
+        string _eventPath; // ultimo file .livecount salvato o aperto
         int _tickCount;
         int _framePending;
 
@@ -79,6 +80,7 @@ namespace LiveCount
             KeyPreview = true;
             AutoScroll = true;
             BuildUi();
+            BuildMenu();
             ResumeLayout(false);
             PerformLayout();
 
@@ -869,6 +871,102 @@ namespace LiveCount
             PlaceDisplay();
             // A ogni avvio, come in LiveCue: invito a offrire un caffe'. Il display continua a funzionare.
             using (var support = new SupportForm()) support.ShowDialog(this);
+            // "LiveCount.exe evento.livecount" (Apri con..., trascinato sull'exe) apre quell'evento.
+            foreach (var arg in Environment.GetCommandLineArgs().Skip(1))
+            {
+                if (arg.EndsWith(Settings.EventExtension, StringComparison.OrdinalIgnoreCase) && System.IO.File.Exists(arg))
+                {
+                    OpenEvent(arg);
+                    break;
+                }
+            }
+        }
+
+        // ---------------- file evento (.livecount) ----------------
+        const string EventFilter = "Evento LiveCount (*.livecount)|*.livecount|Tutti i file|*.*";
+
+        void BuildMenu()
+        {
+            var menu = new MenuStrip { Dock = DockStyle.Top };
+            var file = new ToolStripMenuItem("File");
+            file.DropDownItems.Add(new ToolStripMenuItem("Apri evento...", null, delegate { OpenEventDialog(); }, Keys.Control | Keys.O));
+            file.DropDownItems.Add(new ToolStripMenuItem("Salva evento", null, delegate { SaveEvent(false); }, Keys.Control | Keys.S));
+            file.DropDownItems.Add(new ToolStripMenuItem("Salva evento con nome...", null, delegate { SaveEvent(true); }, Keys.Control | Keys.Shift | Keys.S));
+            menu.Items.Add(file);
+
+            // I riquadri sono a coordinate fisse: scendono dell'altezza del menu.
+            int h = menu.PreferredSize.Height;
+            foreach (Control c in Controls) c.Top += h;
+            ClientSize = new Size(ClientSize.Width, ClientSize.Height + h);
+            Controls.Add(menu);
+            MainMenuStrip = menu;
+        }
+
+        void UpdateTitle()
+        {
+            Text = "LiveCount - Regia" + (_eventPath != null ? " - " + System.IO.Path.GetFileNameWithoutExtension(_eventPath) : "");
+        }
+
+        void OpenEventDialog()
+        {
+            using (var dlg = new OpenFileDialog { Title = "Apri evento", Filter = EventFilter })
+            {
+                if (_eventPath != null) dlg.InitialDirectory = System.IO.Path.GetDirectoryName(_eventPath);
+                if (dlg.ShowDialog(this) == DialogResult.OK) OpenEvent(dlg.FileName);
+            }
+        }
+
+        void OpenEvent(string path)
+        {
+            Settings ev;
+            try { ev = Settings.LoadEvent(path); }
+            catch (Exception ex)
+            {
+                // Niente e' stato toccato: l'evento aperto resta com'e'.
+                MessageBox.Show(this, "Impossibile aprire l'evento (file danneggiato o non valido):\n" + ex.Message,
+                    "LiveCount", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            _s.CopyEventFrom(ev);
+            _loading = true;
+            LoadIntoUi();
+            _msgBox.Text = _s.MessageText ?? "";
+            _loading = false;
+            _renderer.ApplySettings(_s);
+            // Un timer in corso non si tocca (potrebbe essere in onda): vale dal prossimo RESET/Imposta.
+            if (!_engine.Running && _engine.ElapsedMs == 0) _engine.SetTotal(UiTotalSeconds() * 1000L);
+            ApplyNdiState();
+            RepaintOutputs();
+            _s.Save();
+            _eventPath = path;
+            UpdateTitle();
+        }
+
+        void SaveEvent(bool saveAs)
+        {
+            string path = _eventPath;
+            if (saveAs || path == null)
+            {
+                using (var dlg = new SaveFileDialog { Title = "Salva evento", Filter = EventFilter, DefaultExt = "livecount", AddExtension = true })
+                {
+                    dlg.FileName = _eventPath != null ? System.IO.Path.GetFileName(_eventPath) : "Evento.livecount";
+                    if (_eventPath != null) dlg.InitialDirectory = System.IO.Path.GetDirectoryName(_eventPath);
+                    if (dlg.ShowDialog(this) != DialogResult.OK) return;
+                    path = dlg.FileName;
+                }
+            }
+            try
+            {
+                _s.SaveEvent(path);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, "Impossibile salvare l'evento:\n" + ex.Message, "LiveCount", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+            _eventPath = path;
+            UpdateTitle();
         }
 
         // ---------------- comandi ----------------

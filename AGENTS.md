@@ -11,6 +11,7 @@ LiveCount è un timer countdown per eventi dal vivo, per Windows, distribuito co
 - **Display** a schermo pieno sul monitor secondario (si apre da solo all'avvio).
 - Barra di avanzamento + numeri: verde, arancio sotto il 10%, rosso sotto il 5% (soglie e colori configurabili). Dopo lo zero conta in positivo (`+00:01`) in rosso.
 - Preset con nome, messaggio sotto il timer (F9), font/colori/dimensioni configurabili.
+- **File evento `.livecount`** (menu File, Ctrl+S / Ctrl+O, o `LiveCount.exe evento.livecount`): XML di `Settings` con solo i campi dell'evento (`Settings.CopyEventFrom`: timer, preset, aspetto, messaggio, video, riquadro). Monitor, schermo pieno, porta, deck e pannello Avanzate restano del PC. **Un campo nuovo in `Settings` che descrive l'evento va aggiunto anche a `CopyEventFrom`.** Il menu sposta in basso tutti i riquadri della sua altezza (`BuildMenu`).
 - Video di sfondo da **NDI** o da **scheda USB** (Magewell, AJA U-TAP, webcam: dispositivi UVC) con il timer in un riquadro sovrapposto, trascinabile da un monitor dal vivo nella regia.
 - **Controllo remoto HTTP** per Bitfocus Companion / Stream Deck, con esportazione automatica di una pagina `.companionconfig`.
 - Finestra "Ti piace LiveCount?" con QR code Buy Me a Coffee a ogni avvio.
