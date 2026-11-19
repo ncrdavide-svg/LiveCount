@@ -21,7 +21,7 @@ Preferisci installarlo come gli altri programmi? Scarica **[LiveCount-Setup.exe]
 
 > Al primo avvio Windows potrebbe mostrare "Windows ha protetto il PC" (l'exe non è firmato): clicca **Ulteriori informazioni → Esegui comunque**.
 
-> **Suite LIVE** · Con **[LiveSuite](https://github.com/ncrdavide-svg/LiveSuite)** installi e tieni aggiornate LiveCue, LiveSlides e LiveCount da un'unica piccola app (nessuna installazione): **[scarica LiveSuite.exe](https://github.com/ncrdavide-svg/LiveSuite/releases/latest/download/LiveSuite.exe)**.
+> **Suite LIVE** · Con **[LiveSuite](https://github.com/ncrdavide-svg/LiveSuite)** installi e tieni aggiornate LiveCue, LiveDeck, LiveCount e LiveCaption da un'unica piccola app (nessuna installazione): **[scarica LiveSuite.exe](https://github.com/ncrdavide-svg/LiveSuite/releases/latest/download/LiveSuite.exe)**.
 
 ## Funzioni
 
