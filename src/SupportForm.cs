@@ -34,7 +34,7 @@ namespace LiveCount
             ShowInTaskbar = false;
             StartPosition = FormStartPosition.CenterParent;
             BackColor = Yellow;
-            ClientSize = new Size(324, 440);
+            ClientSize = new Size(324, 450);
             Font = new Font("Segoe UI", 9F);
 
             Controls.Add(CenteredLabel("Ti piace LiveCount?", new Font("Segoe UI", 13.5F, FontStyle.Bold), 24, 30));
@@ -66,6 +66,13 @@ namespace LiveCount
             _noThanks.ForeColor = Color.FromArgb(150, 150, 160);
             _noThanks.Click += delegate { if (_secondsLeft <= 0) Close(); };
             Controls.Add(_noThanks);
+
+            // Chi ha un codice sostenitore lo inserisce qui una volta: da li' in poi nessuna app
+            // della suite mostra questa finestra (vedi SupporterCode).
+            var codeLink = CenteredLabel("Ho un codice sostenitore", new Font("Segoe UI", 8.5F, FontStyle.Underline), 412, 20);
+            codeLink.Cursor = Cursors.Hand;
+            codeLink.Click += delegate { if (AskCode(this)) Close(); };
+            Controls.Add(codeLink);
             ResumeLayout(false);
 
             UpdateButtonText();
@@ -86,6 +93,70 @@ namespace LiveCount
         }
 
         void UpdateButtonText() { _noThanks.Text = "No, grazie (" + _secondsLeft + ")"; }
+
+        // Finestrella in cui incollare il codice: si salva in %APPDATA%\LIVE e vale per tutte le app.
+        static bool AskCode(IWin32Window owner)
+        {
+            using (var f = new Form())
+            {
+                f.AutoScaleDimensions = new SizeF(96F, 96F);
+                f.AutoScaleMode = AutoScaleMode.Dpi;
+                f.Text = "Codice sostenitore";
+                f.Icon = Program.AppIcon;
+                f.FormBorderStyle = FormBorderStyle.FixedDialog;
+                f.MaximizeBox = false;
+                f.MinimizeBox = false;
+                f.ShowInTaskbar = false;
+                f.StartPosition = FormStartPosition.CenterParent;
+                f.BackColor = Yellow;
+                f.Font = new Font("Segoe UI", 9F);
+                f.ClientSize = new Size(420, 200);
+
+                var label = new Label
+                {
+                    Text = "Incolla il codice sostenitore che hai ricevuto (va bene anche tutto il testo del file sostenitore.txt).",
+                    ForeColor = Ink, Location = new Point(16, 12), Size = new Size(388, 38)
+                };
+                var box = new TextBox
+                {
+                    Multiline = true, ScrollBars = ScrollBars.Vertical, Font = new Font("Consolas", 9F),
+                    Location = new Point(16, 54), Size = new Size(388, 90)
+                };
+                var ok = new Button
+                {
+                    Text = "Attiva", Location = new Point(228, 156), Size = new Size(84, 30),
+                    FlatStyle = FlatStyle.Flat, BackColor = Ink, ForeColor = Color.White, Cursor = Cursors.Hand
+                };
+                ok.FlatAppearance.BorderSize = 0;
+                var cancel = new Button
+                {
+                    Text = "Annulla", Location = new Point(320, 156), Size = new Size(84, 30),
+                    DialogResult = DialogResult.Cancel, BackColor = Color.White
+                };
+                f.CancelButton = cancel;
+                ok.Click += delegate
+                {
+                    string name;
+                    try { name = SupporterCode.Save(box.Text); }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(f, "Non riesco a salvare il codice: " + ex.Message, f.Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+                    if (name == null)
+                    {
+                        MessageBox.Show(f, "Questo codice non è valido. Controlla di averlo copiato tutto, firma compresa.",
+                            f.Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+                    MessageBox.Show(f, "Grazie, " + name + "!\n\nDa ora la finestra del caffè non comparirà più, in tutte le app della suite LIVE.",
+                        f.Text, MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    f.DialogResult = DialogResult.OK;
+                };
+                f.Controls.AddRange(new Control[] { label, box, ok, cancel });
+                return f.ShowDialog(owner) == DialogResult.OK;
+            }
+        }
 
         static Label CenteredLabel(string text, Font font, int y, int h)
         {
