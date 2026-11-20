@@ -870,7 +870,9 @@ namespace LiveCount
             base.OnShown(e);
             PlaceDisplay();
             // A ogni avvio, come in LiveCue: invito a offrire un caffe'. Il display continua a funzionare.
-            using (var support = new SupportForm()) support.ShowDialog(this);
+            // Non a chi ha un codice sostenitore valido (sostenitore.txt, vedi SupporterCode).
+            if (SupporterCode.FindSupporter() == null)
+                using (var support = new SupportForm()) support.ShowDialog(this);
             // "LiveCount.exe evento.livecount" (Apri con..., trascinato sull'exe) apre quell'evento.
             foreach (var arg in Environment.GetCommandLineArgs().Skip(1))
             {
