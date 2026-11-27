@@ -49,6 +49,10 @@ namespace LiveCount
         Label _speedLbl;
         Button _btnAdvanced;
         GroupBox _gTimer, _gDisp, _gNdi;
+        CheckBox _clockShow, _clockSeconds, _clockBold;
+        ComboBox _clockPos, _clockFontBox;
+        NumericUpDown _clockSize;
+        Button _cClock;
 
         public ControlForm()
         {
@@ -74,7 +78,7 @@ namespace LiveCount
             Text = "LiveCount - Regia";
             Icon = Program.AppIcon;
             Font = new Font("Segoe UI", 9F);
-            ClientSize = new Size(1412, 700);
+            ClientSize = new Size(1412, 836);
             MinimumSize = new Size(800, 500);
             StartPosition = FormStartPosition.Manual;
             KeyPreview = true;
@@ -164,8 +168,8 @@ namespace LiveCount
             gPreset.Controls.Add(_presetName);
             gPreset.Controls.Add(Btn("Salva ore/min/sec", 304, 170, 130, 30, delegate { SavePreset(); }));
 
-            var gMsg = Group("Messaggio sotto il timer", 12, 520, 450, 170);
-            _msgBox = new TextBox { Location = new Point(16, 24), Size = new Size(418, 60), Multiline = true, ScrollBars = ScrollBars.Vertical, Font = new Font("Segoe UI", 11F) };
+            var gMsg = Group("Messaggio sotto il timer", 12, 520, 450, 306);
+            _msgBox = new TextBox { Location = new Point(16, 24), Size = new Size(418, 196), Multiline = true, ScrollBars = ScrollBars.Vertical, Font = new Font("Segoe UI", 11F) };
             _msgBox.TextChanged += delegate
             {
                 _renderer.MessageText = _msgBox.Text;
@@ -174,13 +178,13 @@ namespace LiveCount
             };
             _msgBox.Leave += delegate { _s.Save(); };
             gMsg.Controls.Add(_msgBox);
-            _btnMsgShow = Btn("MOSTRA  (F9)", 16, 92, 150, 40, delegate { ToggleMessage(); });
+            _btnMsgShow = Btn("MOSTRA  (F9)", 16, 228, 150, 40, delegate { ToggleMessage(); });
             _btnMsgShow.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
             gMsg.Controls.Add(_btnMsgShow);
-            gMsg.Controls.Add(Btn("Pulisci", 172, 92, 80, 40, delegate { _msgBox.Clear(); }));
-            _msgOnAir = Lbl("", 262, 104); _msgOnAir.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            gMsg.Controls.Add(Btn("Pulisci", 172, 228, 80, 40, delegate { _msgBox.Clear(); }));
+            _msgOnAir = Lbl("", 262, 240); _msgOnAir.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             gMsg.Controls.Add(_msgOnAir);
-            gMsg.Controls.Add(Lbl("Il testo si aggiorna in diretta mentre e' visibile.", 16, 140));
+            gMsg.Controls.Add(Lbl("Il testo si aggiorna in diretta mentre e' visibile.", 16, 276));
 
             // --- Colonna centrale ---
             var gDisp = _gDisp = Group("Display", 476, 8, 450, 110);
@@ -258,8 +262,27 @@ namespace LiveCount
             gApi.Controls.Add(_deckSize);
             gApi.Controls.Add(Btn("Esporta per Companion...", 222, 46, 212, 28, delegate { ExportCompanion(); }));
 
+            // Ora attuale sul display, con aspetto e posizione propri.
+            var gClock = Group("Ora attuale", 476, 696, 450, 130);
+            _clockShow = new CheckBox { Text = "Mostra l'ora sul display", Location = new Point(16, 26), AutoSize = true, Font = new Font("Segoe UI", 9F, FontStyle.Bold) };
+            gClock.Controls.Add(_clockShow);
+            _clockSeconds = new CheckBox { Text = "Secondi", Location = new Point(196, 26), AutoSize = true };
+            gClock.Controls.Add(_clockSeconds);
+            _clockPos = new ComboBox { Location = new Point(276, 23), Size = new Size(158, 24), DropDownStyle = ComboBoxStyle.DropDownList };
+            _clockPos.Items.AddRange(new object[] { "In alto a sinistra", "In alto al centro", "In alto a destra", "In basso a sinistra", "In basso al centro", "In basso a destra" });
+            gClock.Controls.Add(_clockPos);
+            gClock.Controls.Add(Lbl("Font:", 16, 62));
+            _clockFontBox = FontCombo(80, 58, 220);
+            gClock.Controls.Add(_clockFontBox);
+            _clockBold = new CheckBox { Text = "Grassetto", Location = new Point(310, 60), AutoSize = true };
+            gClock.Controls.Add(_clockBold);
+            gClock.Controls.Add(Lbl("Dimensione (px):", 16, 96));
+            _clockSize = Num(130, 92, 10, 1000); _clockSize.Width = 60; _clockSize.Increment = 5;
+            gClock.Controls.Add(_clockSize);
+            _cClock = ColorRow(gClock, "Colore", 200, 92);
+
             // --- Colonna destra: NDI e monitoraggio ---
-            var gNdi = _gNdi = Group("Avanzate: video (NDI o scheda USB) e posizione del timer", 940, 8, 460, 682);
+            var gNdi = _gNdi = Group("Avanzate: video (NDI o scheda USB) e posizione del timer", 940, 8, 460, 818);
             gNdi.Controls.Add(Lbl("Sorgente:", 16, 30));
             _ndiCombo = new ComboBox { Location = new Point(80, 26), Size = new Size(280, 24), DropDownStyle = ComboBoxStyle.DropDownList };
             _ndiCombo.DropDown += delegate { RefreshSources(true); };
@@ -313,22 +336,22 @@ namespace LiveCount
             var attribution = new LinkLabel
             {
                 Text = "NDI® is a registered trademark of Vizrt NDI AB - ndi.video",
-                Location = new Point(16, 636), AutoSize = true, LinkColor = SystemColors.GrayText
+                Location = new Point(16, 772), AutoSize = true, LinkColor = SystemColors.GrayText
             };
             attribution.LinkArea = new LinkArea(attribution.Text.Length - 9, 9);
             attribution.LinkClicked += delegate { try { Process.Start("https://ndi.video"); } catch { } };
             gNdi.Controls.Add(attribution);
 
-            var contacts = new LinkLabel { Text = "Altre app e contatti: GitHub", Location = new Point(16, 656), AutoSize = true };
+            var contacts = new LinkLabel { Text = "Altre app e contatti: GitHub", Location = new Point(16, 792), AutoSize = true };
             contacts.LinkArea = new LinkArea(contacts.Text.Length - 6, 6);
             contacts.LinkClicked += delegate { try { Process.Start("https://github.com/ncrdavide-svg"); } catch { } };
             gNdi.Controls.Add(contacts);
 
-            foreach (var n in new[] { _timerSize, _warnPct, _dangerPct, _barHeight, _msgSize, _boxOpacity })
+            foreach (var n in new[] { _timerSize, _warnPct, _dangerPct, _barHeight, _msgSize, _boxOpacity, _clockSize })
                 n.ValueChanged += delegate { ReadLookFromUi(); };
-            foreach (var c in new[] { _timerBold, _msgBold, _showBar })
+            foreach (var c in new[] { _timerBold, _msgBold, _showBar, _clockShow, _clockSeconds, _clockBold })
                 c.CheckedChanged += delegate { ReadLookFromUi(); };
-            foreach (var c in new[] { _timerFontBox, _msgFontBox })
+            foreach (var c in new[] { _timerFontBox, _msgFontBox, _clockFontBox, _clockPos })
                 c.SelectedIndexChanged += delegate { ReadLookFromUi(); };
         }
 
@@ -425,6 +448,13 @@ namespace LiveCount
             SetSwatch(_cMsg, Settings.ParseColor(_s.MessageColor, Color.White));
             SetSwatch(_cBox, Settings.ParseColor(_s.BoxColor, Color.Black));
             _boxOpacity.Value = Clamp(_s.BoxOpacity, 0, 100);
+            _clockShow.Checked = _s.ShowClock;
+            _clockSeconds.Checked = _s.ClockSeconds;
+            _clockPos.SelectedIndex = (int)Clamp(_s.ClockPosition, 0, 5);
+            SelectFont(_clockFontBox, _s.ClockFont);
+            _clockBold.Checked = _s.ClockBold;
+            _clockSize.Value = Clamp(_s.ClockSize, 10, 1000);
+            SetSwatch(_cClock, Settings.ParseColor(_s.ClockColor, Color.White));
             _apiPort.Value = Clamp(_s.ApiPort, 1024, 65535);
             _deckSize.SelectedIndex = Math.Max(0, Math.Min(1, _s.CompanionDeck));
             _ndiEnable.Checked = _s.NdiEnabled;
@@ -460,6 +490,13 @@ namespace LiveCount
             _s.MessageColor = Settings.ToHex(_cMsg.BackColor);
             _s.BoxColor = Settings.ToHex(_cBox.BackColor);
             _s.BoxOpacity = (int)_boxOpacity.Value;
+            _s.ShowClock = _clockShow.Checked;
+            _s.ClockSeconds = _clockSeconds.Checked;
+            _s.ClockPosition = Math.Max(0, _clockPos.SelectedIndex);
+            _s.ClockFont = (string)_clockFontBox.SelectedItem ?? "Segoe UI";
+            _s.ClockBold = _clockBold.Checked;
+            _s.ClockSize = (int)_clockSize.Value;
+            _s.ClockColor = Settings.ToHex(_cClock.BackColor);
             _renderer.ApplySettings(_s);
             RepaintOutputs();
             _s.Save();
@@ -741,6 +778,9 @@ namespace LiveCount
                 case "message/show": _renderer.MessageVisible = true; RepaintOutputs(); break;
                 case "message/hide": _renderer.MessageVisible = false; RepaintOutputs(); break;
                 case "message/toggle": ToggleMessage(); break;
+                case "clock/show": _clockShow.Checked = true; break;
+                case "clock/hide": _clockShow.Checked = false; break;
+                case "clock/toggle": _clockShow.Checked = !_clockShow.Checked; break;
                 case "display/show": if (!_display.Visible) PlaceDisplay(); break;
                 case "display/hide": _display.Hide(); break;
                 case "speed":
@@ -768,7 +808,8 @@ namespace LiveCount
                    ",\"running\":" + (_engine.Running ? "true" : "false") +
                    ",\"speed\":" + _engine.Speed.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture) +
                    ",\"phase\":" + RemoteApi.JsonString(phase) +
-                   ",\"message_visible\":" + (_renderer.MessageVisible ? "true" : "false") + "}";
+                   ",\"message_visible\":" + (_renderer.MessageVisible ? "true" : "false") +
+                   ",\"clock_visible\":" + (_s.ShowClock ? "true" : "false") + "}";
         }
 
         void ExportCompanion()
@@ -1039,7 +1080,7 @@ namespace LiveCount
         }
 
         // ---------------- refresh periodico ----------------
-        string _lastText, _lastDisplayText;
+        string _lastText, _lastDisplayText, _lastClockText;
         Color _lastColor;
         int _lastBarStep = -1;
 
@@ -1057,12 +1098,15 @@ namespace LiveCount
                 _lastText = text; _lastColor = col;
             }
 
-            // Ridisegna il display quando cambia il testo o la barra avanza di un pixel (su 2000).
+            // Ridisegna il display quando cambia il testo, la barra avanza di un pixel (su 2000)
+            // o cambia l'ora mostrata (anche a timer fermo).
             int barStep = (int)(_engine.RemainingFraction * 2000);
-            if (_display.Visible && (barStep != _lastBarStep || text != _lastDisplayText))
+            string clock = _s.ShowClock ? _renderer.ClockText : null;
+            if (_display.Visible && (barStep != _lastBarStep || text != _lastDisplayText || clock != _lastClockText))
             {
                 _lastBarStep = barStep;
                 _lastDisplayText = text;
+                _lastClockText = clock;
                 _display.Invalidate();
             }
 

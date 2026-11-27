@@ -30,6 +30,7 @@ Preferisci installarlo come gli altri programmi? Scarica **[LiveCount-Setup.exe]
 - **Preset** con nome e durata, più impostazione manuale di ore, minuti e secondi.
 - **Velocità di scorrimento** regolabile da 0.5x a 2x a passi di 0.1 (1x = tempo reale), anche mentre il timer corre.
 - **Messaggio sotto il timer**, da mostrare o nascondere con un clic (F9), con font, colore e grandezza a scelta.
+- **Ora attuale** sul display (24 ore, con o senza secondi), in un angolo o al centro in alto o in basso, con font, colore e grandezza a scelta.
 - **Video di sfondo** da una sorgente **NDI®** o da una **scheda di acquisizione USB** (Magewell USB Capture, AJA U-TAP, webcam…), con il timer in un riquadro sovrapposto. Le impostazioni del video si aprono con il pulsante **Avanzate** nella regia.
 - **Monitor dal vivo** dello schermo secondario nella regia: trascini il riquadro del timer per spostarlo, l'angolo per ridimensionarlo, la rotellina per ingrandirlo.
 - Font, dimensioni e colori di timer, sfondo, messaggio e riquadro tutti configurabili.
@@ -58,9 +59,10 @@ Porta predefinita `8787`, tutte le richieste in GET, risposta JSON con lo stato 
 | `/api/add?min=5` (negativo per togliere) | Aggiunge o toglie minuti |
 | `/api/preset?name=Nome` · `/api/preset?index=1` | Carica un preset |
 | `/api/message/show` · `/hide` · `/toggle` | Messaggio sotto il timer |
+| `/api/clock/show` · `/hide` · `/toggle` | Ora attuale sul display |
 | `/api/display/show` · `/hide` | Display sul secondo schermo |
 | `/api/speed?value=1.5` · `/api/speed/up` · `/down` · `/reset` | Velocità di scorrimento (0.5–2.0, passi di 0.1) |
-| `/api/status` | Stato: `text`, `remaining_ms`, `total_ms`, `running`, `speed`, `phase`, `message_visible` |
+| `/api/status` | Stato: `text`, `remaining_ms`, `total_ms`, `running`, `speed`, `phase`, `message_visible`, `clock_visible` |
 
 </details>
 

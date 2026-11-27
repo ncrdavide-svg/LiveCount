@@ -85,6 +85,15 @@ namespace LiveCount
         public int MessageSize = 90;
         public string MessageColor = "#FFFFFF";
 
+        // Ora attuale sul display, in un angolo o al centro in alto/in basso dello schermo.
+        public bool ShowClock = false;
+        public bool ClockSeconds = false;
+        public int ClockPosition = 2; // 0..2 in alto (sinistra, centro, destra), 3..5 in basso
+        public string ClockFont = "Segoe UI";
+        public bool ClockBold = true;
+        public int ClockSize = 80;
+        public string ClockColor = "#FFFFFF";
+
         // NDI: sorgente video di sfondo e riquadro del timer (coordinate 0..1 rispetto allo schermo).
         public bool NdiEnabled = false;
         public string NdiSource = "";
@@ -190,6 +199,9 @@ namespace LiveCount
 
             MessageText = o.MessageText; MessageFont = o.MessageFont; MessageBold = o.MessageBold;
             MessageSize = o.MessageSize; MessageColor = o.MessageColor;
+
+            ShowClock = o.ShowClock; ClockSeconds = o.ClockSeconds; ClockPosition = o.ClockPosition;
+            ClockFont = o.ClockFont; ClockBold = o.ClockBold; ClockSize = o.ClockSize; ClockColor = o.ClockColor;
 
             NdiEnabled = o.NdiEnabled; NdiSource = o.NdiSource;
             BoxX = o.BoxX; BoxY = o.BoxY; BoxW = o.BoxW; BoxH = o.BoxH;
