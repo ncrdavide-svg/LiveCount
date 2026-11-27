@@ -77,14 +77,19 @@ Asset in `assets/`: `LiveCount.ico`/`.png` (logo), `BuyMeACoffeeQR.png` (copiato
 
 ## API remota
 
-GET su `http://<pc>:8787/api/...`, risposta JSON con lo stato (`text`, `remaining_ms`, `total_ms`, `running`, `speed`, `phase`, `message_visible`).
-Comandi: `start`, `pause`, `toggle`, `reset`, `add?min=N` (negativo per togliere), `preset?name=…` / `preset?index=N`, `message/show|hide|toggle`, `display/show|hide`, `speed?value=N` / `speed/up|down|reset`, `status`.
+GET su `http://<pc>:8787/api/...`, risposta JSON con lo stato (`text`, `remaining_ms`, `total_ms`, `running`, `speed`, `phase`, `message_visible`, `clock_visible`).
+Comandi: `start`, `pause`, `toggle`, `reset`, `add?min=N` (negativo per togliere), `preset?name=…` / `preset?index=N`, `message/show|hide|toggle`, `display/show|hide`, `speed?value=N` / `speed/up|down|reset`, `clock/show|hide|toggle`, `status`.
 
 ## Velocità e pannello Avanzate (v1.2.0)
 
-- `TimerEngine.Speed`: 0.5x–2.0x a passi di 0.1. Al cambio di velocità il tratto già percorso viene consolidato in `_accumulatedMs` e lo Stopwatch riparte, quindi niente salti. Non viene salvata: ogni avvio parte da 1.0x. Nella regia l'etichetta si colora (arancio sopra 1x, azzurro sotto) e lo stato mostra la velocità.
+- `TimerEngine.Speed`: 0.5x–2.0x a passi di 0.1. Al cambio di velocità il tratto già percorso viene consolidato in `_accumulatedMs` e lo Stopwatch riparte, quindi niente salti. Non viene salvata: ogni avvio parte da 1.0x. Nella regia l'etichetta si colora in base allo scarto da 1.0x, sia sopra sia sotto: fino a ±0.3 verde (non si nota), da ±0.4 a ±0.6 arancio (potrebbe notarsi), oltre rosso; lo stato mostra la velocità.
 - La colonna video (NDI/USB, monitor del secondo schermo, posizione del riquadro, note NDI/GitHub) si apre con **Avanzate >>** nel riquadro Display; lo stato è salvato in `Settings.ShowAdvanced` (predefinito: chiusa). `ApplyAdvanced()` adatta la larghezza della regia ed è chiamato in `OnLoad`, dopo il ridimensionamento DPI.
 I comandi arrivano su un thread del server e vengono eseguiti sul thread UI con `Invoke`.
+
+## Ora attuale sul display
+
+- Riquadro "Ora attuale" nella regia (colonna centrale, in basso). Campi `Settings.ShowClock`, `ClockSeconds`, `ClockPosition` (0..2 in alto sinistra/centro/destra, 3..5 in basso), `ClockFont`, `ClockBold`, `ClockSize`, `ClockColor`; fanno parte dell'evento (`CopyEventFrom`).
+- `Renderer.DrawClock` disegna l'ora sull'intero schermo, anche con il video (fuori dal riquadro del timer), sotto la barra quando è in alto a tutto schermo; si riduce da sola se non entra. `Refresh_` ridisegna il display anche quando cambia solo l'ora (timer fermo).
 
 ## Companion: note sul formato del file
 

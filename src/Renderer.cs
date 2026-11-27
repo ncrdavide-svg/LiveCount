@@ -11,9 +11,9 @@ namespace LiveCount
     {
         readonly TimerEngine _engine;
         Settings _s;
-        Font _timerFont, _messageFont;
+        Font _timerFont, _messageFont, _clockFont;
 
-        public Color Back, Normal, Warn, Danger, MsgColor, BoxColor;
+        public Color Back, Normal, Warn, Danger, MsgColor, BoxColor, ClockColor;
         public bool MessageVisible;
         public string MessageText = "";
 
@@ -32,8 +32,11 @@ namespace LiveCount
             _s = s;
             if (_timerFont != null) _timerFont.Dispose();
             if (_messageFont != null) _messageFont.Dispose();
+            if (_clockFont != null) _clockFont.Dispose();
             _timerFont = MakeFont(s.TimerFont, s.TimerSize, s.TimerBold);
             _messageFont = MakeFont(s.MessageFont, s.MessageSize, s.MessageBold);
+            _clockFont = MakeFont(s.ClockFont, s.ClockSize, s.ClockBold);
+            ClockColor = Settings.ParseColor(s.ClockColor, Color.White);
             Back = Settings.ParseColor(s.BackColor, Color.Black);
             Normal = Settings.ParseColor(s.NormalColor, Color.LimeGreen);
             Warn = Settings.ParseColor(s.WarnColor, Color.Orange);
@@ -107,6 +110,56 @@ namespace LiveCount
 
             g.Restore(state);
             if (path != null) path.Dispose();
+
+            if (_s.ShowClock) DrawClock(g, screen, pxScale);
+        }
+
+        // Testo dell'ora attuale (24 ore), come appare sul display.
+        public string ClockText
+        {
+            get { return DateTime.Now.ToString(_s.ClockSeconds ? "HH:mm:ss" : "HH:mm", System.Globalization.CultureInfo.InvariantCulture); }
+        }
+
+        // L'ora sta sull'intero schermo (anche con il video), fuori dal riquadro del timer.
+        void DrawClock(Graphics g, RectangleF screen, float s)
+        {
+            if (screen.Width <= 1 || screen.Height <= 1 || s <= 0) return;
+            string text = ClockText;
+            using (var sf = new StringFormat(StringFormat.GenericTypographic))
+            {
+                sf.FormatFlags |= StringFormatFlags.NoWrap;
+                SizeF sz = g.MeasureString(text, _clockFont, PointF.Empty, sf);
+                var fam = _clockFont.FontFamily;
+                var style = _clockFont.Style;
+                float ascent = _clockFont.Size * fam.GetCellAscent(style) / fam.GetEmHeight(style);
+                float digitTop = Math.Max(0, ascent - _clockFont.Size * 0.72f);
+                float h = ascent - digitTop; // altezza visibile delle cifre
+
+                // Non deve mai uscire dallo schermo: se e' troppo grande viene ridotta.
+                float total = s;
+                float maxW = screen.Width * 0.96f, maxH = screen.Height * 0.4f;
+                if (sz.Width * total > maxW) total = maxW / sz.Width;
+                if (h * total > maxH) total = maxH / h;
+
+                float margin = Math.Min(screen.Width, screen.Height) * 0.03f;
+                // In alto, a tutto schermo, la barra di avanzamento occupa la prima fascia.
+                float topInset = (!Overlay && _s.ShowBar) ? Math.Max(1f, _s.BarHeight * s) : 0;
+                int pos = Math.Max(0, Math.Min(5, _s.ClockPosition));
+                int col = pos % 3;
+                bool bottom = pos >= 3;
+
+                float w = sz.Width * total;
+                float x = col == 0 ? screen.X + margin : col == 1 ? screen.X + (screen.Width - w) / 2f : screen.Right - margin - w;
+                float y = bottom ? screen.Bottom - margin - h * total : screen.Y + topInset + margin;
+
+                var st = g.Save();
+                g.TranslateTransform(x, y);
+                g.ScaleTransform(total, total);
+                g.TranslateTransform(0, -digitTop);
+                using (var b = new SolidBrush(ClockColor))
+                    g.DrawString(text, _clockFont, b, 0, 0, sf);
+                g.Restore(st);
+            }
         }
 
         void DrawText(Graphics g, RectangleF area, float s, Color col)
