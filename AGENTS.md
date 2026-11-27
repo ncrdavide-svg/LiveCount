@@ -82,7 +82,7 @@ Comandi: `start`, `pause`, `toggle`, `reset`, `add?min=N` (negativo per togliere
 
 ## Velocità e pannello Avanzate (v1.2.0)
 
-- `TimerEngine.Speed`: 0.5x–2.0x a passi di 0.1. Al cambio di velocità il tratto già percorso viene consolidato in `_accumulatedMs` e lo Stopwatch riparte, quindi niente salti. Non viene salvata: ogni avvio parte da 1.0x. Nella regia l'etichetta si colora (arancio sopra 1x, azzurro sotto) e lo stato mostra la velocità.
+- `TimerEngine.Speed`: 0.5x–2.0x a passi di 0.1. Al cambio di velocità il tratto già percorso viene consolidato in `_accumulatedMs` e lo Stopwatch riparte, quindi niente salti. Non viene salvata: ogni avvio parte da 1.0x. Nella regia l'etichetta si colora in base allo scarto da 1.0x, sia sopra sia sotto: fino a ±0.3 verde (non si nota), da ±0.4 a ±0.6 arancio (potrebbe notarsi), oltre rosso; lo stato mostra la velocità.
 - La colonna video (NDI/USB, monitor del secondo schermo, posizione del riquadro, note NDI/GitHub) si apre con **Avanzate >>** nel riquadro Display; lo stato è salvato in `Settings.ShowAdvanced` (predefinito: chiusa). `ApplyAdvanced()` adatta la larghezza della regia ed è chiamato in `OnLoad`, dopo il ridimensionamento DPI.
 I comandi arrivano su un thread del server e vengono eseguiti sul thread UI con `Invoke`.
 

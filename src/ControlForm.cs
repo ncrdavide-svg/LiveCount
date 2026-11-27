@@ -1028,10 +1028,16 @@ namespace LiveCount
         {
             double v = _engine.Speed;
             string text = FormatSpeed(v);
-            // Fuori dal tempo reale l'etichetta si colora, cosi' non passa inosservata.
-            Color back = v > 1.0 ? Color.FromArgb(255, 220, 160) : v < 1.0 ? Color.FromArgb(190, 220, 255) : SystemColors.Control;
+            // Quanto si nota la velocita' alterata, in decimi di scarto da 1.0x (vale sia sopra sia sotto):
+            // fino a 0.3 verde (non si nota), da 0.4 a 0.6 arancio (potrebbe notarsi), oltre rosso.
+            int dev = (int)Math.Round(Math.Abs(v - 1.0) * 10);
+            Color back, fore;
+            if (dev <= 3) { back = Color.FromArgb(34, 160, 80); fore = Color.White; }
+            else if (dev <= 6) { back = Color.FromArgb(245, 158, 11); fore = Color.Black; }
+            else { back = Color.FromArgb(220, 50, 50); fore = Color.White; }
             if (_speedLbl.Text != text) _speedLbl.Text = text;
             if (_speedLbl.BackColor != back) _speedLbl.BackColor = back;
+            if (_speedLbl.ForeColor != fore) _speedLbl.ForeColor = fore;
         }
 
         void SetAdvanced(bool show)
